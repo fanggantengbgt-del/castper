@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MirrorDeck – Cermin Layar HP</title>
+<style>
+:root{--bg:#e9ecf5;--grid:#d6dbea;--ink:#171a26;--mute:#5d6379;--card:rgba(255,255,255,.82);--line:rgba(23,26,38,.14);--usb:#d97706;--wifi:#0891b2;--ok:#16a34a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141f;--grid:#1d2133;--ink:#eceefa;--mute:#9aa0bb;--card:rgba(30,34,52,.84);--line:rgba(236,238,250,.14);--usb:#fbbf24;--wifi:#22d3ee;--ok:#4ade80}}
+:root[data-theme="dark"]{--bg:#12141f;--grid:#1d2133;--ink:#eceefa;--mute:#9aa0bb;--card:rgba(30,34,52,.84);--line:rgba(236,238,250,.14);--usb:#fbbf24;--wifi:#22d3ee;--ok:#4ade80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:2px solid var(--wifi);outline-offset:2px}
+header{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--card);backdrop-filter:blur(14px)}
+.brand{font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+#tabs{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
+.tab{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);white-space:nowrap;max-width:200px}
+.tab span{overflow:hidden;text-overflow:ellipsis}
+.tab.on{background:var(--ink);color:var(--bg);border-color:transparent}
+.tab.dim{opacity:.55}
+.tab em{font-style:normal;opacity:.6;padding:0 2px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.add{padding:7px 13px;border-radius:10px;background:var(--usb);color:#1b1200;font-weight:600;white-space:nowrap}
+#stage{position:relative;flex:1;overflow:hidden;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+#empty{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:24px;color:var(--mute)}
+#empty h1{margin:0 0 6px;color:var(--ink);font-size:1.5rem;letter-spacing:-.03em}
+.win{position:absolute;width:300px;border-radius:22px;background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.35);padding:0 8px 8px;--ar:.46}
+.bar{display:flex;align-items:center;gap:7px;padding:9px 2px;cursor:grab;touch-action:none;user-select:none}
+.bar b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+.tag{font-size:.7rem;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--mute)}
+.bar button{width:26px;height:26px;border-radius:8px;line-height:1}
+.bar button:hover{background:var(--line)}
+.scr{aspect-ratio:var(--ar);background:#000;border-radius:14px;overflow:hidden}
+.scr canvas,.scr video{width:100%;height:100%;display:block;touch-action:none}
+.scr video{object-fit:contain}
+.nav{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;padding-top:6px}
+.nav button{width:38px;height:26px;border-radius:13px;background:var(--line)}
+.rs{position:absolute;right:4px;bottom:4px;width:18px;height:18px;cursor:nwse-resize;touch-action:none;border-right:3px solid var(--mute);border-bottom:3px solid var(--mute);border-radius:0 0 12px 0;opacity:.7}
+.scr canvas{object-fit:contain}
+.win:fullscreen{width:100vw!important;height:100vh;border-radius:0;display:flex;flex-direction:column;background:#000;border:0;padding:0 6px 6px;box-sizing:border-box}
+.win:fullscreen .scr{flex:1;aspect-ratio:auto;min-height:0;border-radius:0}
+.win:fullscreen .rs{display:none}
+.nav button.on{background:var(--usb);color:#1b1200}
+.ov{position:absolute;inset:0;z-index:9999;background:rgba(10,12,20,.55);display:grid;place-items:center;padding:14px;overflow:auto}
+.dlg{width:min(560px,100%);background:var(--card);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:18px}
+.dlg h2{margin:0 0 4px;font-size:1.2rem;letter-spacing:-.02em}
+.dlg p{margin:0 0 12px;color:var(--mute)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.opt{text-align:left;padding:14px;border-radius:14px;border:2px solid var(--line)}
+.opt:hover{border-color:currentColor}
+.opt.u{color:var(--usb)}.opt.w{color:var(--wifi)}
+.opt strong{display:block;font-size:1.05rem;margin-bottom:4px}
+.opt small{display:block;color:var(--mute);font-size:.8rem}
+#st{min-height:1.4em;margin:12px 0 0;font-size:.85rem}
+.x{margin-top:8px;color:var(--mute);text-decoration:underline}
+#toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:10000;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;max-width:90%}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">📱 MirrorDeck</span>
+  <div id="tabs"></div>
+  <button class="add" id="add">+ Perangkat</button>
+</header>
+<main id="stage">
+  <div id="empty"><div><h1>Belum ada layar</h1><div>Hubungkan HP lewat USB atau nirkabel. Layarnya muncul sebagai jendela yang bisa digeser.</div></div></div>
+  <div class="ov" id="ov" hidden>
+    <div class="dlg">
+      <h2>Hubungkan HP</h2>
+      <p>Pilih cara menyambung. Gunakan Chrome atau Edge di komputer.</p>
+      <div class="opts">
+        <button class="opt u" id="usb"><strong>USB</strong><small>Langsung dari browser lewat WebUSB. Aktifkan Opsi pengembang › Debugging USB di Android, lalu setujui izin di HP. Kalau gagal dibuka, jalankan adb kill-server. Untuk suara dan layar HP mati, siapkan file scrcpy-server dari rilis scrcpy di GitHub (Android 11 ke atas).</small></button>
+        <button class="opt w" id="wifi"><strong>Nirkabel</strong><small>Pilih jendela atau layar yang menampilkan HP Anda dari aplikasi mirroring nirkabel (scrcpy --tcpip, Phone Link, AirPlay, Cast).</small></button>
+      </div>
+      <div id="st" role="status"></div>
+      <button class="x" id="cls">Tutup</button>
+    </div>
+  </div>
+  <div id="toast" hidden></div>
+</main>
+<script>
+const $=s=>document.querySelector(s),stage=$('#stage'),te=new TextEncoder(),td=new TextDecoder();
+let sessions=[],cur=null,z=10,n=0;
+const cat=(...a)=>{const o=new Uint8Array(a.reduce((x,y)=>x+y.length,0));let p=0;for(const y of a){o.set(y,p);p+=y.length}return o};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const toast=m=>{const t=$('#toast');(document.fullscreenElement||stage).appendChild(t);t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3500)};
+const status=(m,c)=>{const e=$('#st');e.textContent=m;e.style.color=c||'var(--mute)'};
+
+/* ---------- Tab & jendela ---------- */
+function tabs(){
+  $('#empty').hidden=sessions.length>0;
+  $('#tabs').replaceChildren(...sessions.map(s=>{
+    const b=document.createElement('button');
+    b.className='tab'+(s===cur?' on':'')+(s.win.hidden?' dim':'');
+    b.innerHTML='<i class="dot"></i><span></span><em title="Tutup">×</em>';
+    b.children[1].textContent=s.name;
+    b.onclick=e=>{if(e.target.tagName==='EM')return closeS(s);if(s===cur&&!s.win.hidden){s.win.hidden=true;tabs()}else focus(s)};
+    return b}));
+}
+function focus(s){s.win.hidden=false;s.win.style.zIndex=++z;cur=s;tabs()}
+function closeS(s){
+  if(!sessions.includes(s))return;
+  s.live=false;try{s.stop&&s.stop()}catch{}
+  s.win.remove();sessions=sessions.filter(x=>x!==s);
+  if(cur===s)cur=sessions[sessions.length-1]||null;tabs();
+}
+function mk(mode,name,ar){
+  const s={id:++n,mode,name,live:true},w=document.createElement('div');
+  w.className='win';w.style.setProperty('--ar',ar);
+  const wd=Math.min(300,stage.clientWidth-24);
+  w.style.width=wd+'px';w.style.left=Math.max(8,40+(n*34)%220)+'px';w.style.top=(14+(n*26)%80)+'px';
+  w.innerHTML=`<div class="bar"><i class="dot"></i><b></b><span class="tag">${mode==='usb'?'USB':'Nirkabel'}</span><button data-a="fs" title="Layar penuh">⛶</button><button data-a="pip" title="Melayang di atas semua tab">⧉</button><button data-a="min" title="Kecilkan">–</button><button data-a="x" title="Tutup">×</button></div><div class="scr"><${mode==='usb'?'canvas':'video'}></${mode==='usb'?'canvas':'video'}></div>${mode==='usb'?'<div class="nav"><button data-k="4" title="Kembali">◁</button><button data-k="3" title="Beranda">○</button><button data-k="187" title="Terbaru">▭</button><button data-a="rot" title="Putar landscape atau portrait">⟳</button><button data-a="aud" title="Suara HP ke laptop">🔊</button><button data-a="off" title="Matikan layar HP, tampilan tetap berjalan">🌙</button></div>':''}<u class="rs"></u>`;
+  w.querySelector('b').textContent=name;
+  s.win=w;s.el=w.querySelector('.scr').firstElementChild;
+  w.querySelector('.bar').onclick=e=>{const a=e.target.dataset.a;if(a==='x')closeS(s);if(a==='min'){w.hidden=true;tabs()}if(a==='pip')pip(s);if(a==='fs')fs(s)};
+  w.onpointerdown=()=>{if(cur!==s)focus(s)};
+  drag(w,w.querySelector('.bar'));resize(w,w.querySelector('.rs'));
+  stage.appendChild(w);sessions.push(s);focus(s);return s;
+}
+function drag(w,bar){
+  bar.onpointerdown=e=>{
+    if(e.target.closest('button'))return;
+    const r=w.getBoundingClientRect(),p=stage.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;
+    bar.setPointerCapture(e.pointerId);bar.style.cursor='grabbing';
+    bar.onpointermove=m=>{
+      w.style.left=Math.max(-r.width+70,Math.min(stage.clientWidth-70,m.clientX-p.left-dx))+'px';
+      w.style.top=Math.max(0,Math.min(stage.clientHeight-44,m.clientY-p.top-dy))+'px'};
+    bar.onpointerup=()=>{bar.onpointermove=bar.onpointerup=null;bar.style.cursor=''};
+  };
+}
+function resize(w,h){
+  h.onpointerdown=e=>{
+    e.stopPropagation();const x0=e.clientX,w0=w.offsetWidth;h.setPointerCapture(e.pointerId);
+    h.onpointermove=m=>{w.style.width=Math.max(200,Math.min(1100,w0+m.clientX-x0))+'px'};
+    h.onpointerup=()=>{h.onpointermove=h.onpointerup=null};
+  };
+}
+async function pip(s){
+  try{
+    let v=s.el;
+    if(s.mode==='usb'){v=s.pv||(s.pv=document.createElement('video'));v.muted=true;v.srcObject=s.el.captureStream(30);await v.play()}
+    await v.requestPictureInPicture();
+  }catch(e){toast('Jendela melayang tidak tersedia: '+e.message)}
+}
+
+function fs(s){if(document.fullscreenElement)document.exitFullscreen();else s.win.requestFullscreen().catch(e=>toast('Layar penuh tidak tersedia: '+e.message))}
+
+/* ---------- Protokol ADB lewat WebUSB ---------- */
+const C=s=>(s.charCodeAt(0)|s.charCodeAt(1)<<8|s.charCodeAt(2)<<16|s.charCodeAt(3)<<24)>>>0;
+const CNXN=C('CNXN'),AUTH=C('AUTH'),OPEN=C('OPEN'),OKAY=C('OKAY'),CLSE=C('CLSE'),WRTE=C('WRTE');
+async function pubKey(){
+  let j=null;try{j=JSON.parse(localStorage.getItem('mdk')||'null')}catch{}
+  if(!j){
+    const k=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-1'},true,['sign']);
+    j=await crypto.subtle.exportKey('jwk',k.privateKey);
+    try{localStorage.setItem('mdk',JSON.stringify(j))}catch{}
+  }
+  let n=0n;for(const x of Uint8Array.from(atob(j.n.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)))n=n<<8n|BigInt(x);
+  const M=1n<<32n,R=1n<<2048n;
+  const inv=(a,m)=>{let t=0n,nt=1n,r=m,nr=a%m;while(nr){const q=r/nr;[t,nt]=[nt,t-q*nt];[r,nr]=[nr,r-q*nr]}return(t%m+m)%m};
+  const n0=(M-inv(n%M,M))%M,rr=(R*R)%n,o=new DataView(new ArrayBuffer(524));
+  o.setUint32(0,64,true);o.setUint32(4,Number(n0),true);
+  for(let i=0;i<64;i++){o.setUint32(8+4*i,Number((n>>BigInt(32*i))&0xffffffffn),true);o.setUint32(264+4*i,Number((rr>>BigInt(32*i))&0xffffffffn),true)}
+  o.setUint32(520,65537,true);
+  return te.encode(btoa(String.fromCharCode(...new Uint8Array(o.buffer)))+' mirrordeck@web\0');
+}
+class Adb{
+  constructor(d){this.d=d;this.st=new Map();this.id=0;this.q=Promise.resolve();this.live=true}
+  tx(cmd,a0,a1,data=new Uint8Array(0)){
+    const job=async()=>{
+      let sum=0;for(const b of data)sum+=b;
+      const h=new DataView(new ArrayBuffer(24));
+      h.setUint32(0,cmd,true);h.setUint32(4,a0,true);h.setUint32(8,a1,true);h.setUint32(12,data.length,true);h.setUint32(16,sum>>>0,true);h.setUint32(20,(cmd^0xffffffff)>>>0,true);
+      await this.d.transferOut(this.eo,h.buffer);
+      if(data.length)await this.d.transferOut(this.eo,data);
+    };
+    const p=this.q.then(job);this.q=p.catch(()=>{});return p;
+  }
+  async connect(){
+    const d=this.d;await d.open();
+    if(!d.configuration)await d.selectConfiguration(1);
+    for(const i of d.configuration.interfaces)for(const a of i.alternates)
+      if(a.interfaceClass===255&&a.interfaceSubclass===66&&a.interfaceProtocol===1){
+        this.i=i.interfaceNumber;
+        for(const e of a.endpoints){if(e.direction==='in')this.ei=e.endpointNumber;else this.eo=e.endpointNumber}
+      }
+    if(this.i===undefined)throw Error('Antarmuka ADB tidak ditemukan di perangkat ini.');
+    await d.claimInterface(this.i);
+    this.key=await pubKey();
+    const ready=new Promise((ok,no)=>{this.ok=ok;this.no=no});
+    this.loop();
+    await this.tx(CNXN,0x01000000,0x40000,te.encode('host::\0'));
+    await ready;
+  }
+  async loop(){
+    try{
+      while(this.live){
+        let r=await this.d.transferIn(this.ei,24);
+        if(r.status!=='ok')continue;
+        const h=r.data,cmd=h.getUint32(0,true),a0=h.getUint32(4,true),a1=h.getUint32(8,true),len=h.getUint32(12,true);
+        let data=new Uint8Array(0);
+        if(len){r=await this.d.transferIn(this.ei,len);data=new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength)}
+        await this.handle(cmd,a0,a1,data);
+      }
+    }catch(e){this.close(e)}
+  }
+  async handle(cmd,a0,a1,data){
+    if(cmd===AUTH&&a0===1){status('Setujui izin debugging USB di layar HP Anda…');await this.tx(AUTH,3,0,this.key)}
+    else if(cmd===CNXN){this.banner=td.decode(data);this.max=Math.min(a1||4096,0x40000);this.ok()}
+    else{
+      const s=this.st.get(a1);if(!s)return;
+      if(cmd===OKAY){s.r=a0;s.ok(s);s.ack&&s.ack()}
+      else if(cmd===WRTE){s.r=a0;await this.tx(OKAY,a1,a0);s.data(data)}
+      else if(cmd===CLSE){this.st.delete(a1);s.no();s.end()}
+    }
+  }
+  open(svc,data,end){
+    const id=++this.id,s={id,data:data||(()=>{}),end:end||(()=>{}),r:0};s.rdy=new Promise((ok,no)=>{s.ok=ok;s.no=no});s.rdy.catch(()=>{});s.write=async b=>{await s.rdy;for(let i=0;i<b.length;i+=this.max){const p=new Promise(r=>s.ack=r);await this.tx(WRTE,id,s.r,b.subarray(i,i+this.max));await p}};s.close=()=>this.tx(CLSE,id,s.r).catch(()=>{});this.st.set(id,s);
+    return this.tx(OPEN,id,0,te.encode(svc+'\0')).then(()=>s.rdy);
+  }
+  run(cmd){let out='';return new Promise(res=>{this.open('shell:'+cmd,d=>out+=td.decode(d),()=>res(out)).catch(()=>res(out))})}
+  close(e){
+    if(!this.live)return;this.live=false;
+    if(this.no)this.no(e||Error('Terputus'));
+    for(const s of this.st.values())s.end();this.st.clear();
+    try{this.d.close()}catch{}
+    this.onclose&&this.onclose();
+  }
+}
+
+/* ---------- Mode USB ---------- */
+async function startUsb(){
+  if(!navigator.usb)throw Error('Browser ini tidak mendukung WebUSB. Buka di Chrome atau Edge pada komputer.');
+  const dev=await navigator.usb.requestDevice({filters:[{classCode:255,subclassCode:66,protocolCode:1}]});
+  const a=new Adb(dev);status('Menyambung ke HP…');
+  await a.connect();
+  const model=(/ro\.product\.model=([^;]+)/.exec(a.banner||'')||[])[1]||dev.productName||'Android';
+  const txt=await a.run('wm size'),m=[...txt.matchAll(/(\d+)x(\d+)/g)].pop();
+  const w=m?+m[1]:1080,h=m?+m[2]:2400;
+  let land=false,W,H,dw,dh,vs=null,ctl=null,au=null,off=false,old='0';
+  const dims=()=>{dw=land?h:w;dh=land?w:h;const sc=1280/Math.max(w,h);W=Math.round(dw*sc/16)*16;H=Math.round(dh*sc/16)*16};dims();
+  const s=mk('usb',model,W/H);
+  s.stop=()=>{if(off){a.run('cmd display power-on 0;settings put global stay_on_while_plugged_in '+old);if(ctl)ctl.write(Uint8Array.of(10,1)).catch(()=>{})}if(au)au.ac.close().catch(()=>{});setTimeout(()=>a.close(),500)};a.onclose=()=>closeS(s);
+  const cv=s.el,g=cv.getContext('2d');cv.width=W;cv.height=H;
+  // kontrol sentuh: ketuk dan geser
+  const pt=e=>{const r=cv.getBoundingClientRect(),k=Math.min(r.width/W,r.height/H),ox=(r.width-W*k)/2,oy=(r.height-H*k)/2,c=(v,mx)=>Math.max(0,Math.min(mx-1,~~v));return{cx:e.clientX,cy:e.clientY,x:c((e.clientX-r.left-ox)/k*dw/W,dw),y:c((e.clientY-r.top-oy)/k*dh/H,dh)}};
+  cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);s.p={...pt(e),t:Date.now()}};
+  cv.onpointerup=e=>{
+    if(!s.p)return;
+    const u=pt(e),x1=s.p.x,y1=s.p.y,x2=u.x,y2=u.y;
+    a.run(Math.hypot(u.cx-s.p.cx,u.cy-s.p.cy)<8?`input tap ${x1} ${y1}`:`input swipe ${x1} ${y1} ${x2} ${y2} ${Math.max(80,Date.now()-s.p.t)}`);
+    s.p=null;
+  };
+  // putar landscape/portrait: memutar layar HP sungguhan, lalu video dimulai ulang dengan ukuran baru
+  const rot=async()=>{land=!land;await a.run(`settings put system accelerometer_rotation 0;settings put system user_rotation ${land?1:0}`);dims();cv.width=W;cv.height=H;s.win.style.setProperty('--ar',W/H);s.win.style.width=Math.min(stage.clientWidth-24,land?620:300)+'px';vs&&vs.close()};
+  // layar fisik mati, HP tetap menyala dan tetap dicermin (hemat baterai)
+  const power=async b=>{
+    const on=!off;
+    if(on){const x=(await a.run('settings get global stay_on_while_plugged_in')).trim();old=/^\d+$/.test(x)?x:'0';await a.run('settings put global stay_on_while_plugged_in 7')}
+    let bad=false;
+    if(ctl)ctl.write(Uint8Array.of(10,on?0:1)).catch(()=>{});
+    else if(/unknown|no shell|exception|error/i.test(await a.run(on?'cmd display power-off 0':'cmd display power-on 0')))bad=true;
+    if(bad){toast('HP ini tidak mendukung mematikan layar lewat perintah. Aktifkan tombol suara (memakai scrcpy-server) lalu coba lagi.');if(on)await a.run('settings put global stay_on_while_plugged_in '+old);return}
+    off=on;b.classList.toggle('on',on);
+    if(!on)await a.run('settings put global stay_on_while_plugged_in '+old);
+    toast(on?'Layar HP mati, tampilan di sini tetap berjalan.':'Layar HP menyala.');
+  };
+  // suara: scrcpy-server dikirim ke HP, audio PCM 48 kHz dialirkan ke browser
+  const audio=async b=>{
+    if(au){const m=au.gn.gain.value>0;au.gn.gain.value=m?0:1;b.textContent=m?'🔇':'🔊';return}
+    try{
+      if(+(await a.run('getprop ro.build.version.sdk'))<30)throw Error('Suara butuh Android 11 atau lebih baru.');
+      toast('Pilih file scrcpy-server dari rilis scrcpy di GitHub.');
+      const f=await new Promise((ok,no)=>{const i=document.createElement('input');i.type='file';i.onchange=()=>i.files[0]?ok(i.files[0]):no(Error('Dibatalkan'));i.oncancel=()=>no(Error('Dibatalkan'));i.click()});
+      const v=/(\d+\.\d+(?:\.\d+)?)/.exec(f.name);
+      if(!v)throw Error('Nama file harus memuat versi, misalnya scrcpy-server-v3.3.3');
+      const ac=new AudioContext({sampleRate:48000}),gn=ac.createGain();gn.connect(ac.destination);await ac.resume();
+      toast('Mengirim server ke HP…');
+      const jar='/data/local/tmp/mirrordeck.jar',up=await a.open('exec:cat > '+jar);
+      await up.write(new Uint8Array(await f.arrayBuffer()));up.close();await sleep(700);
+      const id=(Math.random()*0x7fffffff|0).toString(16).padStart(8,'0');
+      a.open(`shell:CLASSPATH=${jar} app_process / com.genymobile.scrcpy.Server ${v[1]} scid=${id} log_level=error tunnel_forward=true video=false audio=true control=true audio_codec=raw send_dummy_byte=false send_device_meta=false send_codec_meta=false send_frame_meta=false`).catch(()=>{});
+      let tail=new Uint8Array(0),t=0;
+      const pcm=d=>{
+        tail=cat(tail,d);const n=tail.length>>2;if(!n)return;
+        const dv=new DataView(tail.buffer,0,n*4),bf=ac.createBuffer(2,n,48000),L=bf.getChannelData(0),R=bf.getChannelData(1);
+        for(let i=0;i<n;i++){L[i]=dv.getInt16(i*4,true)/32768;R[i]=dv.getInt16(i*4+2,true)/32768}
+        tail=tail.slice(n*4);
+        if(t<ac.currentTime)t=ac.currentTime+.06;
+        if(t>ac.currentTime+.5)return;
+        const x=ac.createBufferSource();x.buffer=bf;x.connect(gn);x.start(t);t+=bf.duration;
+      };
+      const conn=async cb=>{for(let i=0;i<25;i++){try{return await a.open('localabstract:scrcpy_'+id,cb)}catch{await sleep(300)}}throw Error('Server tidak merespons. Pastikan versi file cocok dan HP Android 11 ke atas.')};
+      await conn(pcm);ctl=await conn();
+      au={ac,gn};b.textContent='🔊';b.classList.add('on');toast('Suara HP sekarang diputar di laptop. Klik lagi untuk bisukan.');
+    }catch(e){toast('Suara gagal: '+e.message)}
+  };
+  s.win.querySelector('.nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k,x=b.dataset.a;if(k)a.run('input keyevent '+k);if(x==='rot')rot();if(x==='aud')audio(b);if(x==='off')power(b)};
+  // video H.264 dari screenrecord, didekode dengan WebCodecs
+  let dec=null,need=true,sps,pps,ts=0,buf=new Uint8Array(0),tm;
+  const SC=new Uint8Array([0,0,0,1]);
+  const proc=n=>{
+    const t=n[0]&31;
+    if(t===7){
+      sps=n;
+      if(!dec||dec.state==='closed'){
+        dec=new VideoDecoder({output:f=>{g.drawImage(f,0,0,W,H);f.close()},error:()=>{dec=null}});
+        dec.configure({codec:'avc1.'+[1,2,3].map(i=>sps[i].toString(16).padStart(2,'0')).join(''),optimizeForLatency:true});
+        need=true;
+      }
+    }else if(t===8)pps=n;
+    else if((t===5||t===1)&&dec&&dec.state==='configured'){
+      const key=t===5;if(key&&!(sps&&pps))return;if(need&&!key)return;need=false;
+      dec.decode(new EncodedVideoChunk({type:key?'key':'delta',timestamp:(ts+=16667),data:key?cat(SC,sps,SC,pps,SC,n):cat(SC,n)}));
+    }
+  };
+  const scan=flush=>{
+    let s0=-1;
+    for(let i=0;i+2<buf.length;i++)if(buf[i]===0&&buf[i+1]===0&&buf[i+2]===1){
+      const e=(i>0&&buf[i-1]===0)?i-1:i;
+      if(s0>=0)proc(buf.subarray(s0,e));
+      s0=i+3;i+=2;
+    }
+    if(s0<0){if(buf.length>1<<20)buf=new Uint8Array(0);return}
+    if(flush){if(buf.length>s0)proc(buf.subarray(s0));buf=new Uint8Array(0)}
+    else buf=buf.slice(s0-3);
+  };
+  const feed=d=>{buf=cat(buf,d);scan(false);clearTimeout(tm);tm=setTimeout(()=>scan(true),60)};
+  (async()=>{
+    while(s.live&&a.live){
+      await new Promise(res=>a.open(`exec:screenrecord --output-format=h264 --size ${W}x${H} --bit-rate 6000000 --time-limit 180 -`,feed,res).then(x=>vs=x).catch(res));try{dec&&dec.close()}catch{}dec=null;buf=new Uint8Array(0);sps=pps=null;
+      await sleep(300);
+    }
+  })();
+}
+
+/* ---------- Mode nirkabel ---------- */
+async function startWifi(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia)throw Error('Browser ini tidak bisa menangkap layar. Gunakan Chrome atau Edge di komputer.');
+  const st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30},audio:false});
+  const s=mk('wifi','Layar nirkabel',9/16),v=s.el;
+  v.srcObject=st;v.muted=true;v.play();
+  v.onloadedmetadata=()=>s.win.style.setProperty('--ar',v.videoWidth/v.videoHeight);
+  s.stop=()=>st.getTracks().forEach(t=>t.stop());
+  st.getVideoTracks()[0].onended=()=>closeS(s);
+}
+
+/* ---------- Dialog ---------- */
+const ov=$('#ov');
+const openDlg=()=>{status('');ov.hidden=false};
+$('#add').onclick=openDlg;$('#cls').onclick=()=>ov.hidden=true;
+const go=fn=>async()=>{
+  try{await fn();ov.hidden=true}
+  catch(e){status(e.name==='NotFoundError'||e.name==='NotAllowedError'?'Dibatalkan. Pilih perangkat atau layar untuk melanjutkan.':'Gagal: '+e.message,'#dc2626')}
+};
+$('#usb').onclick=go(startUsb);$('#wifi').onclick=go(startWifi);
+tabs();
+</script>
+</body>
+</html>
